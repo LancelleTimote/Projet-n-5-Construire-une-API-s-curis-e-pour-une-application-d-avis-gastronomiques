@@ -12,4 +12,4 @@ Vous avez besoin de Node.js et node-sass sur votre machine.
 - Cloner ce repo sur votre machine.
 - Utiliser la commande "npm install" pour recuperer tout les modules nécessaires à l'application.
 - À partir du dossier backend, lancer la commande "node server" pour demarrer la BDD.
-- À partir du dossier frontend, lancer la commande "ng serve" pour lancer l'application (URL de l'App : http://localhost:3000/).
+- À partir du dossier frontend, lancer la commande "ng serve" pour lancer l'application (URL de l'App : http://localhost:4200/).
