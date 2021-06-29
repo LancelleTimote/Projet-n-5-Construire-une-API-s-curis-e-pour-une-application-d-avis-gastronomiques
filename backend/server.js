@@ -12,7 +12,7 @@ const normalizePort = val => {  //normalizePort renvoie un port valide, qu'il so
   }
   return false;
 };
-const port = normalizePort(process.env.PORT || '4200');
+const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const errorHandler = error => { //errorHandler recherche les différentes erreurs et les gère de manière appropriée, elle est ensuite enregistrée dans le serveur
