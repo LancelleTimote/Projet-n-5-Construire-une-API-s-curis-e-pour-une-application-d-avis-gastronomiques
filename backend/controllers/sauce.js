@@ -1,28 +1,36 @@
 const Sauce = require('../models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
 
-exports.createSauce = (req, res, next) => {    //post pour traiter seulement les requêtes post
-    delete req.body._id;  //vu que le frontend renvoie un id qui n'est pas le bon (le bon est généré automatique par mongoDB), donc supprime le champ id du corps de la requête, avant de
-                          //copier l'objet
-    const sauce = new Sauce({ //on crée une nouvelle instance de notre model thing
-      ...req.body //on utilise l'opérateur spread pour copier les champs qu'il y a dans le corps de la requête (title, description, ...)
-    });
-    sauce.save()  //pour enregistrer le thing dans la BDD, elle retourne une promise
-      .then(() => res.status(201).json({ message: 'Objet enregistré !'})) //obligé de renvoyer une réponse car sinon expiration de la requête, 201 pour une création de ressource
-      .catch(error => res.status(400).json({ error }));
+exports.createSauce = (req, res, next) => {
+  const sauceObject = JSON.parse(req.body.sauce); //pour extraire l'objet JSON du thing dans req.body
+  delete sauceObject._id;  //on enlève le champ id du corps de la requête, car le front-end renvoi un id qui n'est pas bon
+  const sauce = new Sauce({ //création d'une nouvelle instance du model Thing
+    ...sauceObject, //permet de copier les champs qu'il y a dans le body de la request et il va détailler le titre, etc...
+    imageUrl : `${req.protocol}://${req.get('host')}/images/${req.file.filename}` //génération de l'url de l'image, req.protocol pour le http ou https, ensuite le host du serveur
+                                                                                  //localhost:3000 mais pour un déploiement ça sera la racine du serveur, le dossier images, et le
+                                                                                  //le nom du fichier
+  });
+  sauce.save()  //permet d'enregistrer le thing dans la base de donnée, la méthode save renvoie une promise
+  .then(() => res.status(201).json({ message: 'Sauce enregistré !'})) //il faut renvoyer une réponse à la front-end, pour éviter l'expiration de la requête, code 201 pour une bonne
+                                                                      //création de ressources, et envoie un message en json
+  .catch(error => res.status(400).json({ error })); //on récupére l'erreur, on renvoie un code 400 avec un json de l'erreur
 };
 
 exports.modifySauce = (req, res, next) => {
-    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })  //pour modifier un thing dans la base de donnée, le premier argument c'est l'objet de comparaison pour
-    //savoir quel objet on modifie (celui dont l'id est égal à l'id qui est envoyé dans les paramètres de requête), le deuxième argument c'est la nouvelle version de l'objet (spread
-    //operator pour récupérer le thing dans la requête, on ajoute que l'id correspond à celui des paramètres)
-      .then(() => res.status(200).json({ message: 'Objet modifié !'}))
-      .catch(error => res.status(400).json({ error }));
+  const sauceObject = req.file ?  //on crée un objet thingObject qui regarde si req.file existe ou non
+  {
+    ...JSON.parse(req.body.sauce),  //s'il existe, on traite la nouvelle image, on récupère la chaîne de caractère, on la parse en objet
+    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`    //on modifie l'image URL
+  } : { ...req.body };    //s'il n'existe pas, on traite simplement l'objet entrant, on prend le corps de la requête
+  Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id }) //pour modifier un thing dans la base de donnée, le premier argument c'est l'objet de comparaison
+  //pour savoir quel objet on modifie (celui dont l'id est égal à l'id qui est envoyé dans les paramètres de requête), le deuxième argument c'est la nouvelle version de l'objet
+  .then(() => res.status(200).json({ message: 'Sauce modifiée !' }))
+  .catch(error => res.status(400).json({ error }));
 };
 
 exports.deleteSauce = (req, res, next) => {
     Sauce.deleteOne({ _id: req.params.id }) //pour supprimer, qui prend l'objet de comparaison comme argument, comme updateOne
                                             //dans la bdd
-      .then(() => res.status(200).json({ message: 'Objet supprimé !'}))
+      .then(() => res.status(200).json({ message: 'Sauce supprimée !'}))
       .catch(error => res.status(400).json({ error }));
 };
 
