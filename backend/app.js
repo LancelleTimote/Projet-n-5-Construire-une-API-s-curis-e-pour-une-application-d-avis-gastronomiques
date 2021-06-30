@@ -1,6 +1,6 @@
 const express = require('express'); //importation de express
 const mongoose = require('mongoose'); //importation pour MongoDB
-const sauce = require('./models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
+const Sauce = require('./models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
 
 mongoose.connect('mongodb+srv://PekockoAdmin:OMMyQLOX67w2mUbL@sopekocko.xoxwf.mongodb.net/Piquante?retryWrites=true&w=majority',  //notre adresse récupéré dans le cluster MongoDB
   { useNewUrlParser: true,
@@ -21,32 +21,27 @@ app.use(express.json());  //pour extraire l'objet JSON de la demande POST proven
                           //(anciennement body parser, intégré à express)
 
 app.post('/api/sauces', (req, res, next) => {    //post pour traiter seulement les requêtes post
-    console.log(req.body);  //le corps de la requête dont on a accès grâce à express.json
-    res.status(201).json({  //res obligatoire car le frontend attend une réponse (sinon site charge en continu), code 201 pour une ressource créer
-        message: 'Objet créé !'   //on envoie un message en json
-    });
+  delete req.body._id;  //vu que le frontend renvoie un id qui n'est pas le bon (le bon est généré automatique par mongoDB), donc supprime le champ id du corps de la requête, avant de
+                        //copier l'objet
+  const sauce = new Sauce({ //on crée une nouvelle instance de notre model thing
+    ...req.body //on utilise l'opérateur spread pour copier les champs qu'il y a dans le corps de la requête (title, description, ...)
+  });
+  sauce.save()  //pour enregistrer le thing dans la BDD, elle retourne une promise
+    .then(() => res.status(201).json({ message: 'Objet enregistré !'})) //obligé de renvoyer une réponse car sinon expiration de la requête, 201 pour une création de ressource
+    .catch(error => res.status(400).json({ error }));
 });
 
-app.use('/api/sauces', (req, res, next) => { //le premier argument est l'URL visé par l'application (le endpoint, la route), l'url total serait http://localhost:3000/api/stuff
-    const sauces = [ //tableau stuff avec 2 objets
-      {             //la forme des objets attendus par le frontend
-        _id: 'oeihfzeoi',
-        title: 'Mon premier objet',
-        description: 'Les infos de mon premier objet',
-        imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-        price: 4900,    //prix en centimes, pour utiliser le moins de chiffres après la virgule, pour éviter les problèmes d'arithmétique
-        userId: 'qsomihvqios',
-      },
-      {
-        _id: 'oeihfzeomoihi',
-        title: 'Mon deuxième objet',
-        description: 'Les infos de mon deuxième objet',
-        imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-        price: 2900,
-        userId: 'qsomihvqios',
-      },
-    ];
-    res.status(200).json(sauces);    //attribu un code 200 à la réponse (réponse réussi), et envoie en json le tableau stuff
+app.get('/api/sauces/:id', (req, res, next) => { //premier segment dynamique, le frontend va envoyer l'id de l'objet, pour pouvoir aller chercher cette id on utilise ":id"
+  Sauce.findOne({ _id: req.params.id }) //on utilise le modéle mongoose avec la méthode findOne pour trouver un seul objet, et on passe un objet de comparaison, là on veut que l'id
+                                        //du Thing soit le même que le paramètre de requête au dessus
+    .then(thing => res.status(200).json(thing)) //on retrouve le thing s'il existe dans la BDD, et on le renvoie en réponse au frontend
+    .catch(error => res.status(404).json({ error })); //404 pour objet non trouvé
+});
+
+app.get('/api/sauces', (req, res, next) => { //le premier argument est l'URL visé par l'application (le endpoint, la route), l'url total serait http://localhost:3000/api/stuff
+  Sauce.find()  //on utilise le modéle mongoose avec la méthode find pour avoir la liste des objets, elle retourne une promise
+  .then(things => res.status(200).json(things)) //on récupère le tableau de tous les things retourné par la BDD, on les renvoie en réponse au frontend, 200 code ok
+  .catch(error => res.status(400).json({ error }));
 });
 
 module.exports = app;   //exportation de l'application pour pouvoir l'utiliser dans les autres fichiers
