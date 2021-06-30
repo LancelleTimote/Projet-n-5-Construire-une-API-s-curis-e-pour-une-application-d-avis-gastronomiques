@@ -1,4 +1,5 @@
 const Sauce = require('../models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
+const fs = require('fs');   //importation de file system du package node, pour avoir accès aux différentes opérations lié au système de fichiers
 
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce); //pour extraire l'objet JSON du thing dans req.body
@@ -28,10 +29,19 @@ exports.modifySauce = (req, res, next) => {
 };
 
 exports.deleteSauce = (req, res, next) => {
-    Sauce.deleteOne({ _id: req.params.id }) //pour supprimer, qui prend l'objet de comparaison comme argument, comme updateOne
-                                            //dans la bdd
-      .then(() => res.status(200).json({ message: 'Sauce supprimée !'}))
-      .catch(error => res.status(400).json({ error }));
+  Sauce.findOne({ _id: req.params.id })   //on trouve l'objet dans la bdd, on veut trouver celui qui a l'id qui correspond à celui dans les paramètres de la requête
+      .then(sauce => {    //quand on le trouve
+          const filename = sauce.imageUrl.split('/images/')[1];   //on extrait le nom du fichier à supprimer, le split va retourner un tableau de 2 éléments, 1er élément tout ce
+                                                                  //qui est avant /images/, puis 2ème éléments tout ce qu'il y a après
+          fs.unlink(`images/${filename}`, () => { //avec ce nom de fichier, on le supprime avec fs.unlink, le 1er argument c'est la chaîne de caractère qui correspond au chemin de
+                                                  //l'image donc images/filename, et le 2ème argument c'est le callback (=>), ce qu'il faut faire une fois le fichier supprimé
+              Sauce.deleteOne({ _id: req.params.id }) //pour supprimer, qui prend l'objet de comparaison comme argument, comme updateOne, une fois que l'image est supprimer, on
+                                                      //supprime l'objet dans la bdd
+                  .then(() => res.status(200).json({ message: 'Sauce supprimée !' }))
+                  .catch(error => res.status(400).json({ error }));
+          });
+      })
+      .catch(error => res.status(500).json({ error }));   //erreur 500 pour une erreur serveur
 };
 
 exports.getOneSauce = (req, res, next) => { //premier segment dynamique, le frontend va envoyer l'id de l'objet, pour pouvoir aller chercher cette id on utilise ":id"
