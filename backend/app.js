@@ -1,4 +1,12 @@
 const express = require('express'); //importation de express
+const mongoose = require('mongoose'); //importation pour MongoDB
+const sauce = require('./models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
+
+mongoose.connect('mongodb+srv://PekockoAdmin:OMMyQLOX67w2mUbL@sopekocko.xoxwf.mongodb.net/Piquante?retryWrites=true&w=majority',  //notre adresse récupéré dans le cluster MongoDB
+  { useNewUrlParser: true,
+    useUnifiedTopology: true })
+  .then(() => console.log('Connexion à MongoDB réussie !'))
+  .catch(() => console.log('Connexion à MongoDB échouée !'));
 
 const app = express();  //app qui sera notre application express
 
@@ -19,26 +27,26 @@ app.post('/api/sauces', (req, res, next) => {    //post pour traiter seulement l
     });
 });
 
-// app.use('/api/sauces', (req, res, next) => { //le premier argument est l'URL visé par l'application (le endpoint, la route), l'url total serait http://localhost:3000/api/stuff
-//     const sauces = [ //tableau stuff avec 2 objets
-//       {             //la forme des objets attendus par le frontend
-//         _id: 'oeihfzeoi',
-//         title: 'Mon premier objet',
-//         description: 'Les infos de mon premier objet',
-//         imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-//         price: 4900,    //prix en centimes, pour utiliser le moins de chiffres après la virgule, pour éviter les problèmes d'arithmétique
-//         userId: 'qsomihvqios',
-//       },
-//       {
-//         _id: 'oeihfzeomoihi',
-//         title: 'Mon deuxième objet',
-//         description: 'Les infos de mon deuxième objet',
-//         imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
-//         price: 2900,
-//         userId: 'qsomihvqios',
-//       },
-//     ];
-//     res.status(200).json(sauces);    //attribu un code 200 à la réponse (réponse réussi), et envoie en json le tableau stuff
-// });
+app.use('/api/sauces', (req, res, next) => { //le premier argument est l'URL visé par l'application (le endpoint, la route), l'url total serait http://localhost:3000/api/stuff
+    const sauces = [ //tableau stuff avec 2 objets
+      {             //la forme des objets attendus par le frontend
+        _id: 'oeihfzeoi',
+        title: 'Mon premier objet',
+        description: 'Les infos de mon premier objet',
+        imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
+        price: 4900,    //prix en centimes, pour utiliser le moins de chiffres après la virgule, pour éviter les problèmes d'arithmétique
+        userId: 'qsomihvqios',
+      },
+      {
+        _id: 'oeihfzeomoihi',
+        title: 'Mon deuxième objet',
+        description: 'Les infos de mon deuxième objet',
+        imageUrl: 'https://cdn.pixabay.com/photo/2019/06/11/18/56/camera-4267692_1280.jpg',
+        price: 2900,
+        userId: 'qsomihvqios',
+      },
+    ];
+    res.status(200).json(sauces);    //attribu un code 200 à la réponse (réponse réussi), et envoie en json le tableau stuff
+});
 
 module.exports = app;   //exportation de l'application pour pouvoir l'utiliser dans les autres fichiers
