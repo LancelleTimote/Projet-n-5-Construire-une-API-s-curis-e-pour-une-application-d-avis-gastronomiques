@@ -14,7 +14,7 @@ exports.signup = (req, res, next) => {  //pour l'enregistrement / création de n
            password : hash  //pour le mdp on va enregistrer le hash crée dans then, afin de ne pas stocker le mdp à blanc
        }); 
        user.save()  //on utilise la méthode save de notre user pour l'enregistrer dans la bdd
-       .then(() => res.status(201).json({ message: 'Utilisateur créé !' })) //on renvoie 201 pour une création de ressource, avec un message
+       .then(() => res.status(201).json({ message: 'Votre compte a bien été enregistré !' })) //on renvoie 201 pour une création de ressource, avec un message
        .catch(error => res.status(400).json({ error }));    //400 pour différencier du 500 en dessous
     })
     .catch(error => res.status(500).json({ error }));   //500 parce que c'est une erreur serveur
@@ -25,7 +25,7 @@ exports.login = (req, res, next) => {   //permet aux utilisateurs de se connecte
                                             //corresponde au mail envoyé dans la req
     .then(user => {
       if (!user) {  //on vérifie ici si on a récupéré un user ou non, si pas de user
-        return res.status(401).json({ error: 'Utilisateur non trouvé !' }); //on renvoie un 401 non autorisé, avec comme erreur Utilisateur non trouvé
+        return res.status(401).json({ error: "Cette adresse email n'existe pas !" }); //on renvoie un 401 non autorisé, avec comme erreur Utilisateur non trouvé
       }
       bcrypt.compare(req.body.password, user.password)  //on utilise le package bcrypt pour comparer le mdp qui est envoyé par l'utilisateur qui essaye de se connecter (avec la req),
                                                         //avec le hash qui est enregistré du user reçu dans then
@@ -45,7 +45,7 @@ exports.login = (req, res, next) => {   //permet aux utilisateurs de se connecte
                     )
             });
         })
-        .catch(error => res.status(500).json({ error }));   //également une histoire d'erreur serveur
+        .catch(error => res.status(500).json({ message: "Une erreur est survenue:" + error }));   //également une histoire d'erreur serveur
     })
-    .catch(error => res.status(500).json({ error }));   //erreur seulement s'il y a un problème de connexion lié à mongoDB, donc 500 parce que c'est une erreur serveur
+    .catch(error => res.status(500).json({ message: "Cette adresse est introuvable en base de données:" + error }));   //erreur seulement s'il y a un problème de connexion lié à mongoDB, donc 500 parce que c'est une erreur serveur
 };

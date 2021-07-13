@@ -1,4 +1,4 @@
-const Sauce = require('../models/sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
+const Sauce = require('../models/Sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
 const fs = require('fs');   //importation de file system du package node, pour avoir accès aux différentes opérations lié au système de fichiers
 
 exports.createSauce = (req, res, next) => {
