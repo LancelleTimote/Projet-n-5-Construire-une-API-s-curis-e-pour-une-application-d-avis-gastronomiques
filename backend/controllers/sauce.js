@@ -94,3 +94,16 @@ exports.getAllSauces = (req, res, next) => { //le premier argument est l'URL vis
         res.status(400).json({ message: error });
     });
 };
+
+exports.likeOneSauce = (req, res, next) => {
+    const sauceObjet = req.body.sauce;
+    Sauce.updateOne({ _id: req.params.id },{$set: {
+        likes: sauceObjet.likes,
+        dislikes: sauceObjet.dislikes,
+        usersDisliked: sauceObjet.usersDisliked,
+        usersLiked: sauceObjet.usersLiked },
+        _id: req.params.id
+    })
+    .then(() => res.status(200).json({ message: req.body.message }))
+    .catch(error => res.status(400).json({ error: req.body.message }));
+};
