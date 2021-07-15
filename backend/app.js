@@ -2,11 +2,13 @@ const express = require('express'); //importation de express
 const mongoose = require('mongoose'); //importation pour MongoDB
 const app = express();  //app qui sera notre application express
 const path = require('path'); //nous donne accès au chemin de notre système de fichiers (comme on sait pas le chemin exact à l'avance pour le dossier images(express.static))
-
 const sauceRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');  //importation routes utilisateurs
+require('dotenv').config();
+const username = process.env.userNameMongoDb;
+const mdp = process.env.mdpMongoDb;
 
-mongoose.connect('mongodb+srv://PekockoAdmin:OMMyQLOX67w2mUbL@sopekocko.xoxwf.mongodb.net/Piquante?retryWrites=true&w=majority',  //notre adresse récupéré dans le cluster MongoDB
+mongoose.connect(`mongodb+srv://${username}:${mdp}@sopekocko.xoxwf.mongodb.net/Piquante?retryWrites=true&w=majority`,  //notre adresse récupéré dans le cluster MongoDB
     { useNewUrlParser: true,
         useUnifiedTopology: true })
     .then(() => console.log('Connexion à MongoDB réussie !'))

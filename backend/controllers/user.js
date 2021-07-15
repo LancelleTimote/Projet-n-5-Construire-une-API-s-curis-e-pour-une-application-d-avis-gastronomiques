@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt'); //importation de bcrypt après installation (npm install --save bcrypt)
-
 const jwt = require('jsonwebtoken'); //importation de token après installation (npm install --save jsonwebtoken)
-
 const User = require('../models/User'); //importation du modèle User
+require('dotenv').config();
+const tokenSecretKey = process.env.tokenSecretKey;
 
 exports.signup = (req, res, next) => {  //pour l'enregistrement / création de nouveau utilisateur
     bcrypt.hash(req.body.password, 10)  //fonction pour hasher / crypter le mdp, fonction asynchrone qui prend du temps qui renvoie une Promise et dans laquelle nous recevons le hash
@@ -39,7 +39,7 @@ exports.login = (req, res, next) => {   //permet aux utilisateurs de se connecte
                                     //connecter qu'une seule fois à leur compte)
                     { userId: user._id },   //la fonction prend en premier argument les données que l'on veut encoder (le payload), ici l'user id qui est l'identifiant de l'utilisateur
                                     //on encode le user id pour la création de nouveau objet, pour ne pas pouvoir modifier ceux des autres utilisateurs
-                    'RANDOM_TOKEN_SECRET',  //le deuxième argument c'est la clé secréte pour l'encodage (pour l'instant clé très simple, en production utiliser une chaîne de caractère + longue et aléatoire)
+                    `${tokenSecretKey}`,  //le deuxième argument c'est la clé secréte pour l'encodage (pour l'instant clé très simple, en production utiliser une chaîne de caractère + longue et aléatoire)
                     { expiresIn: '24h' }    //le troisième argument, une expiration pour le token qui durera 24h, passé se délai il ne sera plus valable et l'utilisateur devrai se reconnecter
                                     //vérifier dans le DevTools, dans l'onglet réseau, qu'il y a un en-tête Authorization avec le mot-clé Bearer et une longue chaîne encodée
                 )
