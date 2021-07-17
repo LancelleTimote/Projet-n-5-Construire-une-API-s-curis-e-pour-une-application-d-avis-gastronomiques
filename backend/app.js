@@ -4,6 +4,7 @@ const app = express();  //app qui sera notre application express
 const path = require('path'); //nous donne accès au chemin de notre système de fichiers (comme on sait pas le chemin exact à l'avance pour le dossier images(express.static))
 const sauceRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');  //importation routes utilisateurs
+const helmet = require('helmet');
 require('dotenv').config();
 const username = process.env.userNameMongoDb;
 const mdp = process.env.mdpMongoDb;
@@ -13,6 +14,13 @@ mongoose.connect(`mongodb+srv://${username}:${mdp}@sopekocko.xoxwf.mongodb.net/P
         useUnifiedTopology: true })
     .then(() => console.log('Connexion à MongoDB réussie !'))
     .catch(() => console.log('Connexion à MongoDB échouée !'));
+
+//fixes for the deprecation warnings...
+mongoose.set('useNewUrlParser', true); 
+mongoose.set('useFindAndModify', false);
+mongoose.set('useCreateIndex', true);
+
+app.use(helmet());
 
 app.use((req, res, next) => {   //ne prend pas d'addresse en 1er paramètre pour s'appliquer à toute les routes, on ajoute des header à l'objet réponse
     res.setHeader('Access-Control-Allow-Origin', '*');  //on dit que l'origin, qui a le droit d'accéder à notre API c'est tout le monde '*'

@@ -3,7 +3,9 @@ const multer = require('multer'); //importation de multer après installation, q
 const MIME_TYPES = {    //les extensions d'images que l'on peut avoir
     'image/jpg': 'jpg', //image/jpg premier mime_type que l'on peut avoir, que se traduit par jpg
     'image/jpeg': 'jpg',
-    'image/png': 'png'
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif'
 };
   
 const storage = multer.diskStorage({  //objet de configuration pour multer, diskStorage fonction de multer pour dire qu'on va enregistrer sur le disque
@@ -14,6 +16,9 @@ const storage = multer.diskStorage({  //objet de configuration pour multer, disk
                                             //quand 2 fichiers ont le même noms)
         const name = file.originalname.split(' ').join('_');    //le nouveau nom du fichier, le nom d'origine du fichier, split et join pour enlever les espaces, et mettre des underscores
         const extension = MIME_TYPES[file.mimetype];    //on crée l'extension du fichier, qui sera l'élément de notre dictionnaire, qui correpond au mimetype du fichier envoyer par frontend
+        mimeTypeIsValid(extension,req);
+        const finalFilename = name +"_"+Date.now()+"."+extension;
+        req.body.finalFileName = finalFilename;
         callback(null, name + Date.now() + '.' + extension);    //null car pas d'erreur, ensuite on crée le file name en entier, donc le name crée au dessus + timestamp pour le rendre unique
                                                                 //à la milliseconde près, on ajoute un point, puis l'extension du fichier crée au dessus
     }
@@ -21,3 +26,9 @@ const storage = multer.diskStorage({  //objet de configuration pour multer, disk
   
 module.exports = multer({ storage }).single('image');   //on exporte notre middleware multer, on passe notre objet storage, single pour dire qu'il s'agit d'un fichier unique et
                                                         //d'une image
+
+const mimeTypeIsValid = (ext,req) => {
+    if(ext!="jpg"&&ext!="jpeg"&&ext!="png"&&ext!="webp"&&ext!="gif") {
+        req.body.errorMessage = "Le format de l'image n'est pas valide!";
+    }
+}
