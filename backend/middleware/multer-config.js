@@ -1,31 +1,39 @@
-const multer = require('multer'); //importation de multer après installation, qui va nous permettre que les utilisateurs puissent télécharger des images d'articles à vendre
+//on importe multer qui est un package qui permet de gérer les fichiers entrants dans les requêtes HTTP
+const multer = require('multer');
 
-const MIME_TYPES = {    //les extensions d'images que l'on peut avoir
-    'image/jpg': 'jpg', //image/jpg premier mime_type que l'on peut avoir, que se traduit par jpg
+//on crée un dictionnaire des types MIME pour définire le format des images
+//donc la creation d'un objet pour ajouter une extention en fonction du type mime du ficher
+const MIME_TYPES = {
+    'image/jpg': 'jpg',
     'image/jpeg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
     'image/gif': 'gif'
 };
-  
-const storage = multer.diskStorage({  //objet de configuration pour multer, diskStorage fonction de multer pour dire qu'on va enregistrer sur le disque
-    destination: (req, file, callback) => { //1er argument qui va expliquer à multer dans quel dossier enregistrer les fichiers
-        callback(null, 'images'); //on appelle le callback, null pour dire qu'il n'y a pas eu d'erreur à ce niveau là, et le nom du dossier
+
+//on crée un objet de configuration pour préciser à multer où enregistrer les fichiers images et les renommer
+const storage = multer.diskStorage({
+    //on met la destination d'enregistrement des images
+    destination: (req, file, callback) => {
+        //on passe le dossier images qu'on a créé dans le backend
+        callback(null, 'images');
     },
-    filename: (req, file, callback) => {    //2ème argument qui va expliquer à multer quel nom de fichier utiliser(car on peut pas utiliser le nom de fichier d'origine sinon problème
-                                            //quand 2 fichiers ont le même noms)
-        const name = file.originalname.split(' ').join('_');    //le nouveau nom du fichier, le nom d'origine du fichier, split et join pour enlever les espaces, et mettre des underscores
-        const extension = MIME_TYPES[file.mimetype];    //on crée l'extension du fichier, qui sera l'élément de notre dictionnaire, qui correpond au mimetype du fichier envoyer par frontend
+    //on dit à multer quel nom de fichier on utilise pour éviter les doublons
+    filename: (req, file, callback) => {
+        //on génère un nouveau nom avec le nom d'origine, on supprime les espaces (white space avec split) et on insère des underscores à la place
+        const name = file.originalname.split(' ').join('_');
+        const extension = MIME_TYPES[file.mimetype];
         mimeTypeIsValid(extension,req);
         const finalFilename = name +"_"+Date.now()+"."+extension;
         req.body.finalFileName = finalFilename;
-        callback(null, name + Date.now() + '.' + extension);    //null car pas d'erreur, ensuite on crée le file name en entier, donc le name crée au dessus + timestamp pour le rendre unique
-                                                                //à la milliseconde près, on ajoute un point, puis l'extension du fichier crée au dessus
+        //on appelle le callback, on passe null pour dire qu'il n'y a pas d'erreur
+        //et on crée le filename en entier, on ajoute un timestamp, un point et enfin l'extension du fichier
+        callback(null, name + Date.now() + '.' + extension); //genère le nom complet du fichier- Nom d'origine + numero unique + . + extension
     }
 });
-  
-module.exports = multer({ storage }).single('image');   //on exporte notre middleware multer, on passe notre objet storage, single pour dire qu'il s'agit d'un fichier unique et
-                                                        //d'une image
+
+//on exporte le module, on lui passe l'objet storage, la méthode single pour dire que c'est un fichier unique et on précise que c'est une image
+module.exports = multer({ storage }).single('image');
 
 const mimeTypeIsValid = (ext,req) => {
     if(ext!="jpg"&&ext!="jpeg"&&ext!="png"&&ext!="webp"&&ext!="gif") {

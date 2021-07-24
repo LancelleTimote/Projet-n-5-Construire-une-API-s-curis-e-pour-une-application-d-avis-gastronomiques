@@ -1,8 +1,12 @@
-const express = require('express'); //importation d'express (après l'avoir installer avec la console)
-const router = express.Router();    //routeur express (routes dans notre routeur)
-const userController = require('../controllers/user');    //contrôleur pour associer les fonctions aux différentes routes
+//contient les fonctions qui s'appliquent aux différentes routes pour les utilisateurs
 
-router.post('/signup', userController.signup);    //post parce que le frontend va aussi envoyer des informations (mail et mdp)
-router.post('/login', userController.login);
+const express = require('express');
+const router = express.Router();    //on crée un router avec la méthode mise à disposition par Express
+const userController = require('../controllers/user');  //contrôleur pour associer les fonctions aux différentes routes
 
-module.exports = router;    //on exporte ce routeur
+//chiffre le mot de passe de l'utilisateur, ajoute l'utilisateur à la base dedonnées
+router.post('/signup', userController.signup);  //crée un nouvel utilisateur
+//vérifie les informations d'identification de l'utilisateur, en renvoyant l'identifiant userID depuis la base de données et un TokenWeb JSON signé(contenant également l'identifiant userID)
+router.post('/login', userController.login);    //connecte un utilisateur
+
+module.exports = router;

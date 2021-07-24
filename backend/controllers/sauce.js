@@ -1,109 +1,119 @@
-const Sauce = require('../models/Sauce');  //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
-const fs = require('fs');   //importation de file system du package node, pour avoir accès aux différentes opérations lié au système de fichiers
+//on prend toute la logique métier pour la déporter dans le fichier sauce.js de controllers
+//on ne garde que la logique de routing dans le fichier sauce.js du router. On importe aussi le model Sauce
+//on a ajouté le controller sauce avec une constante sauceCtrl dans le fichier sauce.js du router
 
+const Sauce = require('../models/Sauce');   //on importe notre nouveau modèle mongoose pour l'utiliser dans l'application
+const fs = require('fs');   //importation de file system du package node, pour avoir accès aux différentes opérations lié au système de fichiers (ici les téléchargements et modifications d'images)
+
+//création d'une sauce
 exports.createSauce = (req, res, next) => {
-    const sauceObject = JSON.parse(req.body.sauce); //pour extraire l'objet JSON du thing dans req.body
-    delete sauceObject._id;  //on enlève le champ id du corps de la requête, car le front-end renvoi un id qui n'est pas bon
-    const sauce = new Sauce({ //création d'une nouvelle instance du model Thing
-        ...sauceObject, //permet de copier les champs qu'il y a dans le body de la request et il va détailler le titre, etc...
+    const sauceObject = JSON.parse(req.body.sauce); //on stocke les données envoyées par le front-end sous forme de form-data dans une variable en les transformant en objet js
+    delete sauceObject._id; //on supprime l'id généré automatiquement et envoyé par le front-end. L'id de la sauce est créé par la base MongoDB lors de la création dans la base
+    const sauce = new Sauce({   //création d'une instance du modèle Sauce
+        ...sauceObject,
         likes: 0,
         dislikes: 0,
         usersLiked: [],
         usersDisliked: [],
-        imageUrl : `${req.protocol}://${req.get('host')}/images/${req.file.filename}` //génération de l'url de l'image, req.protocol pour le http ou https, ensuite le host du serveur
-                                                                                    //localhost:3000 mais pour un déploiement ça sera la racine du serveur, le dossier images, et le
-                                                                                    //le nom du fichier
+        imageUrl : `${req.protocol}://${req.get('host')}/images/${req.file.filename}`   //on modifie l'URL de l'image, on veut l'URL complète, quelque chose dynamique avec les segments de l'URL
     });
-    if(!req.body.errorMessage) {
-        sauce.save()  //permet d'enregistrer le thing dans la base de donnée, la méthode save renvoie une promise
-        .then(() => {
-            res.status(201).json({ message: 'La sauce a été créée avec succès !' }); //il faut renvoyer une réponse à la front-end, pour éviter l'expiration de la requête, code 201 pour une bonne
-                                                                                    //création de ressources, et envoie un message en json
-        })
-        .catch(error => {
-            if(error.message.indexOf("to be unique")>0) {
-                req.body.errorMessage = "Le nom de cette sauce existe déjà!";
-            }
-            next();
-        })
-    } else {
-        next();
-    }
+    sauce.save()    //sauvegarde de la sauce dans la base de données
+    .then(() => res.status(201).json({ message: 'The sauce was created successfully !' }))  //on envoi une réponse au frontend avec un statut 201 sinon on a une expiration de la requête
+    .catch(error => res.status(400).json({ error }));   //on ajoute un code erreur en cas de problème
 };
 
+//modification d'une sauce
 exports.modifySauce = (req, res, next) => {
     const sauceObject = req.file ?  //on crée un objet thingObject qui regarde si req.file existe ou non
     {
         ...JSON.parse(req.body.sauce),  //s'il existe, on traite la nouvelle image, on récupère la chaîne de caractère, on la parse en objet
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`    //on modifie l'image URL
     } : { ...req.body };    //s'il n'existe pas, on traite simplement l'objet entrant, on prend le corps de la requête
-    if(!req.body.errorMessage) {
-        Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id }) //pour modifier un thing dans la base de donnée, le premier argument c'est l'objet de comparaison
-        //pour savoir quel objet on modifie (celui dont l'id est égal à l'id qui est envoyé dans les paramètres de requête), le deuxième argument c'est la nouvelle version de l'objet
-        .then(() => {
-            if(!req.file) {
-                res.status(200).json({ message: 'La sauce a bien été modifiée!' })
-            } else {
-                next();
-            }
-        })
-        .catch(error => { 
-            if(error.message.indexOf("duplicate key")>0) {
-                req.body.errorMessage = 'Le nom de cette sauce existe déjà!';
-            }
-            next();
-        })
-    } else {
-        next();
-    }
+    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id }) //pour modifier dans la base de donnée
+    .then(() => res.status(200).json({ message: 'The sauce has been changed !' }))
+    .catch(error => res.status(400).json({ error }));
 };
 
+//suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
-    Sauce.findOne({ _id: req.params.id })   //on trouve l'objet dans la bdd, on veut trouver celui qui a l'id qui correspond à celui dans les paramètres de la requête
-    .then(sauce => {    //quand on le trouve
-        const filename = sauce.imageUrl.split('/images/')[1];   //on extrait le nom du fichier à supprimer, le split va retourner un tableau de 2 éléments, 1er élément tout ce
-                                                                //qui est avant /images/, puis 2ème éléments tout ce qu'il y a après
-        fs.unlink(`images/${filename}`, () => { //avec ce nom de fichier, on le supprime avec fs.unlink, le 1er argument c'est la chaîne de caractère qui correspond au chemin de
-                                                //l'image donc images/filename, et le 2ème argument c'est le callback (=>), ce qu'il faut faire une fois le fichier supprimé
-            Sauce.deleteOne({ _id: req.params.id }) //pour supprimer, qui prend l'objet de comparaison comme argument, comme updateOne, une fois que l'image est supprimer, on
-                                                    //supprime l'objet dans la bdd
-                .then(() => res.status(200).json({ message: 'La sauce a bien été supprimée !' }))
+    Sauce.findOne({ _id: req.params.id })   //avant de supprimer l'objet, on va le chercher pour obtenir l'url de l'image et supprimer le fichier image de la base
+    .then((sauce) => {
+        if (sauce.userId !== req.user) {  //on compare l'id de l'auteur de la sauce et l'id de l'auteur de la requête
+            res.status(403).json({message: 'Forbidden action !'});  //si ce ne sont pas les mêmes id = code 401: unauthorized.
+            return sauce;
+        }
+        const filename = sauce.imageUrl.split('/images/')[1];   //pour extraire ce fichier, on récupère l'url de la sauce, et on le split autour de la chaine de caractères, donc le nom du fichier
+        fs.unlink(`images/${filename}`, () => {                 //avec ce nom de fichier, on appelle unlink pour suppr le fichier
+            Sauce.deleteOne({ _id: req.params.id })             //on supprime le document correspondant de la base de données
+                .then(() => res.status(200).json({ message: 'The sauce has been removed !' }))
                 .catch(error => res.status(400).json({ error }));
         });
     })
-    .catch(error => res.status(500).json({ error }));   //erreur 500 pour une erreur serveur
+    .catch(error => res.status(500).json({ error }));
 };
 
-exports.getOneSauce = (req, res, next) => { //premier segment dynamique, le frontend va envoyer l'id de l'objet, pour pouvoir aller chercher cette id on utilise ":id"
-    Sauce.findOne({ _id: req.params.id }) //on utilise le modéle mongoose avec la méthode findOne pour trouver un seul objet, et on passe un objet de comparaison, là on veut que l'id
-                                          //du Thing soit le même que le paramètre de requête au dessus
-    .then(sauce => {    //on retrouve le thing s'il existe dans la BDD, et on le renvoie en réponse au frontend
-        res.status(200).json(sauce);
-    })
-    .catch( error => {
-        res.status(404).json({ error: error }); //404 pour objet non trouvé
-    });
+//récupère une sauce grâce à son id depuis la base MongoDB
+exports.getOneSauce = (req, res, next) => {
+    Sauce.findOne({ _id: req.params.id })   //on utilise la méthode findOne et on lui passe l'objet de comparaison, on veut que l'id de la sauce soit le même que le paramètre de requêt
+    .then(sauce => res.status(200).json(sauce))         //si ok on retourne une réponse et l'objet
+    .catch(error => res.status(404).json({ error }));   //si erreur on génère une erreur 404 pour dire qu'on ne trouve pas l'objet
 };
 
-exports.getAllSauces = (req, res, next) => { //le premier argument est l'URL visé par l'application (le endpoint, la route), l'url total serait http://localhost:3000/api/stuff
-    Sauce.find()  //on utilise le modéle mongoose avec la méthode find pour avoir la liste des objets, elle retourne une promise
-    .then(sauces => {   //on récupère le tableau de tous les things retourné par la BDD, on les renvoie en réponse au frontend, 200 code ok
-        res.status(200).json(sauces);
-    })
-    .catch(error => {
-        res.status(400).json({ message: error });
-    });
+//récupère toutes les sauces
+exports.getAllSauces = (req, res, next) => {
+    Sauce.find()    //on utilise la méthode find pour obtenir la liste complète des sauces trouvées dans la base, l'array de toutes les sauves de la base de données
+    .then(sauces => res.status(200).json(sauces))       //si OK on retourne un tableau de toutes les données
+    .catch(error => res.status(400).json({ error }));   //si erreur on retourne un message d'erreur
 };
 
-exports.likeOneSauce = (req, res, next) => {
-    const sauceObjet = req.body.sauce;
-    Sauce.updateOne({ _id: req.params.id },{$set: {
-        likes: sauceObjet.likes,
-        dislikes: sauceObjet.dislikes,
-        usersDisliked: sauceObjet.usersDisliked,
-        usersLiked: sauceObjet.usersLiked },
-        _id: req.params.id
-    })
-    .then(() => res.status(200).json({ message: req.body.message }))
-    .catch(error => res.status(400).json({ error: req.body.message }));
-};
+//fonction d'évaluation des sauces (like ou dislike)
+//3 conditions possible car voici ce qu'on reçoit du frontend, la valeur du like est soit: 0, 1 ou -1 (req.body.like)
+//un switch statement est parfaitement adapté
+exports.rateOneSauce = (req, res, next) => {
+    switch (req.body.like) {
+        case 0:                                                   //case : req.body.like = 0
+            Sauce.findOne({ _id: req.params.id })
+            .then((sauce) => {
+                if (sauce.usersLiked.find( user => user === req.body.userId)) { //on cherche si l'utilisateur est déjà dans le tableau usersLiked
+                Sauce.updateOne({ _id: req.params.id }, {                       //si oui, on va mettre à jour la sauce avec le _id présent dans la requête
+                    $inc: { likes: -1 },                                        //on décrémente la valeur des likes de 1 (soit -1)
+                    $pull: { usersLiked: req.body.userId }                      //on retire l'utilisateur du tableau
+                })
+                    .then(() => { res.status(201).json({ message: "Recorded vote !"}); })  //code 201: created
+                    .catch((error) => { res.status(400).json({error}); });
+    
+                } 
+                else if (sauce.usersDisliked.find(user => user === req.body.userId)) {   //même principe que précédemment avec le tableau usersDisliked
+                Sauce.updateOne({ _id: req.params.id }, {
+                    $inc: { dislikes: -1 },
+                    $pull: { usersDisliked: req.body.userId }
+                })
+                    .then(() => { res.status(201).json({ message: "Recorded vote !" }); })
+                    .catch((error) => { res.status(400).json({error}); });
+                }
+            })
+            .catch((error) => { res.status(404).json({error}); });
+        break;
+        
+        case 1:                                                     //case : req.body.like = 1
+            Sauce.updateOne({ _id: req.params.id }, {               //on recherche la sauce avec le _id présent dans la requête
+            $inc: { likes: 1 },                                     //incrémentaton de la valeur de likes par 1
+            $push: { usersLiked: req.body.userId }                  //on ajoute l'utilisateur dans le array usersLiked
+            })
+            .then(() => { res.status(201).json({ message: "Recorded vote !" }); }) //code 201 : created
+            .catch((error) => { res.status(400).json({ error }); });                //code 400 : bad request
+        break;
+        
+        case -1:                                                    //case : req.body.like = 1
+            Sauce.updateOne({ _id: req.params.id }, {               //on recherche la sauce avec le _id présent dans la requête
+            $inc: { dislikes: 1 },                                  //on décremente de 1 la valeur de dislikes
+            $push: { usersDisliked: req.body.userId }               //on rajoute l'utilisateur à l'array usersDiliked
+            })
+            .then(() => { res.status(201).json({ message: "Recorded vote !" }); })  //code 201 : created
+            .catch((error) => { res.status(400).json({ error }); });                //code 400 : bad request
+        break;
+
+        default:
+            console.error("Bad request !");
+    }
+  };

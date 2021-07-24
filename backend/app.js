@@ -1,41 +1,54 @@
-const express = require('express'); //importation de express
-const mongoose = require('mongoose'); //importation pour MongoDB
-const app = express();  //app qui sera notre application express
-const path = require('path'); //nous donne accès au chemin de notre système de fichiers (comme on sait pas le chemin exact à l'avance pour le dossier images(express.static))
+//app.js fait appel aux différentes fonctions implémentées dans l'APi : Accès aux images, aux route User, aux route Sauce
+
+//import des modules npm - Ajout des plugins externes
+const express = require('express');
+
+//pour extraire l'objet JSON de la demande POST provenant de l'application front-end (anciennement body parser intégré à express)
+const app = express();
+
+//on importe mongoose pour pouvoir utiliser la base de données
+const mongoose = require('mongoose');
+
+//on donne accès au chemin de notre système de fichier
+const path = require('path'); //plugin qui sert dans l'upload des images et permet de travailler avec les répertoires et chemin de fichier
 const sauceRoutes = require('./routes/sauce');
-const userRoutes = require('./routes/user');  //importation routes utilisateurs
+const userRoutes = require('./routes/user');
 const helmet = require('helmet');
 require('dotenv').config();
-const username = process.env.userNameMongoDb;
-const mdp = process.env.mdpMongoDb;
 
-mongoose.connect(`mongodb+srv://${username}:${mdp}@sopekocko.xoxwf.mongodb.net/Piquante?retryWrites=true&w=majority`,  //notre adresse récupéré dans le cluster MongoDB
-    { useNewUrlParser: true,
-        useUnifiedTopology: true })
-    .then(() => console.log('Connexion à MongoDB réussie !'))
-    .catch(() => console.log('Connexion à MongoDB échouée !'));
+mongoose.connect(process.env.database,
+    {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
+    .then(() => console.log('Connection to MongoDB successful !'))
+    .catch(() => console.log('Connection to MongoDB failed !'));
 
-//fixes for the deprecation warnings...
+//fixes pour les deprecation warnings
 mongoose.set('useNewUrlParser', true); 
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
 
-app.use(helmet());
-
-app.use((req, res, next) => {   //ne prend pas d'addresse en 1er paramètre pour s'appliquer à toute les routes, on ajoute des header à l'objet réponse
-    res.setHeader('Access-Control-Allow-Origin', '*');  //on dit que l'origin, qui a le droit d'accéder à notre API c'est tout le monde '*'
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');    //on autorise l'utilisation de certains en-tête sur l'objet requête
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');    //on autorise aussi certaines méthodes, les verbes de requêtes
+//middleware Header pour contourner les erreurs en débloquant certains systèmes de sécurité CORS, afin que tout le monde puisse faire des requetes depuis son navigateur
+app.use((req, res, next) => {
+    //on indique que les ressources peuvent être partagées depuis n'importe quelle origine
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    //on indique les entêtes qui seront utilisées après la pré-vérification cross-origin afin de donner l'autorisation
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
+    //on indique les méthodes autorisées pour les requêtes HTTP
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
 });
 
-app.use(express.json());  //pour extraire l'objet JSON de la demande POST provenant de l'application front-end, permet de transformer le corps de la requête en objet JS utilisable
-                          //(anciennement body parser, intégré à express)
+app.use(helmet());
 
-app.use('/images', express.static(path.join(__dirname, 'images'))); //répond aux requêtes envoyé à /images, express.static pour servir le dossier static images, __dirname pour le nom
-                                                                    //du dossier dans lequel on va se trouver, auquel on rajoute images
+app.use(express.json());
 
-app.use('/api/sauces', sauceRoutes); //importation des routes POST, PUT, DELETE, GET, comme on veut enregistrer notre routeur pour toutes les demandes effectuées vers /api/stuff
-app.use('/api/auth', userRoutes); //enregistrement des routes, api/auth est la route attendu par le frontend, la racine de tout ce qui sera authentification
+//gestion de la ressource image de façon statique
+//midleware qui permet de charger les fichiers qui sont dans le repertoire images
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
-module.exports = app;   //exportation de l'application pour pouvoir l'utiliser dans les autres fichiers
+app.use('/api/sauces', sauceRoutes);
+app.use('/api/auth', userRoutes);
+
+module.exports = app;
