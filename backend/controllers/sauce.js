@@ -8,7 +8,7 @@ const fs = require('fs');   //importation de file system du package node, pour a
 //création d'une sauce
 exports.createSauce = (req, res, next) => {
     const sauceObject = JSON.parse(req.body.sauce); //on stocke les données envoyées par le front-end sous forme de form-data dans une variable en les transformant en objet js
-    delete sauceObject._id; //on supprime l'id généré automatiquement et envoyé par le front-end. L'id de la sauce est créé par la base MongoDB lors de la création dans la base
+    delete sauceObject._id;     //on supprime l'id généré automatiquement et envoyé par le front-end. L'id de la sauce est créé par la base MongoDB lors de la création dans la base
     const sauce = new Sauce({   //création d'une instance du modèle Sauce
         ...sauceObject,
         likes: 0,

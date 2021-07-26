@@ -4,7 +4,7 @@ const uniqueValidator = require('mongoose-unique-validator');   //package qui va
 
 const userSchema = mongoose.Schema({
     email: { type: String, required: true, unique: true },  //unique pour ne pas que deux utilisateurs utilisent le même mail
-    password: { type: String, required: true}   //le mdp même si ça sera un hash crypté, ça sera un string
+    password: { type: String, required: true}               //le mdp même si ça sera un hash crypté, ça sera un string
 });
 
 //plugin pour garantir un email unique
