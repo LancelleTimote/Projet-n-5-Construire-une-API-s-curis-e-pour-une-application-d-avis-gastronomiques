@@ -3,8 +3,15 @@ const mongoose = require('mongoose'); //création d'un model user avec mongoose,
 const uniqueValidator = require('mongoose-unique-validator');   //package qui valide l'unicité de l'email
 
 const userSchema = mongoose.Schema({
-    email: { type: String, required: true, unique: true },  //unique pour ne pas que deux utilisateurs utilisent le même mail
-    password: { type: String, required: true}               //le mdp même si ça sera un hash crypté, ça sera un string
+    email: {
+        type: String,
+        required: [true, 'Email address is required !'], 
+        unique: true,    //unique pour ne pas que deux utilisateurs utilisent le même mail
+    },
+    password: {         //le mdp même si ça sera un hash crypté, ça sera un string
+        type: String,
+        required: [true, "Password is required !"]
+    }
 });
 
 //plugin pour garantir un email unique
