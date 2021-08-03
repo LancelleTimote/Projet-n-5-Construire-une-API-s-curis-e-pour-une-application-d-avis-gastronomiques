@@ -29,10 +29,10 @@ exports.modifySauce = (req, res, next) => {
     let sauceObject = {};
     req.file ? (      //on crée un objet thingObject qui regarde si req.file existe ou non
         Sauce.findOne({ _id: req.params.id })   //si la modification contient une image => Utilisation de l'opérateur ternaire comme structure conditionnelle
-        .then((sauce) => {
-            const filename = sauce.imageUrl.split('/images/')[1]
-            fs.unlinkSync(`images/${filename}`)
-        }),
+        .then(sauce => {
+            const filename = sauce.imageUrl.split('/images/')[1];    //on supprime l'ancienne image
+            fs.unlinkSync(`images/${filename}`);
+        }).catch(error => res.status(500).json({ error })),
         sauceObject = { //on modifie les données et on ajoute la nouvelle image
             ...JSON.parse(req.body.sauce),  //s'il existe, on traite la nouvelle image, on récupère la chaîne de caractère, on la parse en objet
             imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,    //on modifie l'image URL
@@ -45,15 +45,10 @@ exports.modifySauce = (req, res, next) => {
     .catch(error => res.status(400).json({ error }));
 };
 
-// if (sauce.userId !== req.user) {  //on compare l'id de l'auteur de la sauce et l'id de l'auteur de la requête
-//     res.status(403).json({ message: 'Forbidden action !' });  //si ce ne sont pas les mêmes id = code 401: unauthorized.
-//     return sauce;
-// } else {
-
 //suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id })   //avant de supprimer l'objet, on va le chercher pour obtenir l'url de l'image et supprimer le fichier image de la base
-    .then((sauce) => {
+    .then(sauce => {
         const decodedToken = jwt.decode(req.headers.authorization.split(' ')[1], process.env.tokenSecretKey);
         const userId = decodedToken.userId;
         if (sauce.userId === userId) {
