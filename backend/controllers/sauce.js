@@ -27,22 +27,25 @@ exports.createSauce = (req, res, next) => {
 //modification d'une sauce
 exports.modifySauce = (req, res, next) => {
     let sauceObject = {};
-    req.file ? (      //on crée un objet thingObject qui regarde si req.file existe ou non
-        Sauce.findOne({ _id: req.params.id })   //si la modification contient une image => Utilisation de l'opérateur ternaire comme structure conditionnelle
-        .then(sauce => {
-            const filename = sauce.imageUrl.split('/images/')[1];    //on supprime l'ancienne image
-            fs.unlinkSync(`images/${filename}`);
-        }).catch(error => res.status(500).json({ error })),
-        sauceObject = { //on modifie les données et on ajoute la nouvelle image
-            ...JSON.parse(req.body.sauce),  //s'il existe, on traite la nouvelle image, on récupère la chaîne de caractère, on la parse en objet
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,    //on modifie l'image URL
+    Sauce.findOne({ _id: req.params.id })   //avant de modifier l'objet, on va le chercher pour obtenir l'url de l'image
+    .then(sauce => {
+        const decodedToken = jwt.decode(req.headers.authorization.split(' ')[1], process.env.tokenSecretKey);
+        const userId = decodedToken.userId;
+        if (sauce.userId === userId) {
+            sauceObject = req.body.sauce ? { ...JSON.parse(req.body.sauce)} : {...req.body }
+            if (req.file) {      //on crée un objet thingObject qui regarde si req.file existe ou non
+                const filename = sauce.imageUrl.split('/images/')[1];    //on supprime l'ancienne image
+                fs.unlinkSync(`images/${filename}`);
+                sauceObject.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;  //on modifie l'image URL
+            }
+            Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id }) //pour modifier dans la base de donnée
+            .then(() => res.status(200).json({ message: 'The sauce has been changed !' }))
+            .catch(error => res.status(400).json({ error }));
+        } else {
+            res.status(401).json({ error: 'Identifiant utilisateur invalide !' });
         }
-    ) : (   //opérateur ternaire équivalent à if() {} else {} => condition ? instruction si vrai : instruction si faux
-        sauceObject = { ...req.body }   //s'il n'existe pas, on traite simplement l'objet entrant, on prend le corps de la requête
-    ) 
-    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id }) //pour modifier dans la base de donnée
-    .then(() => res.status(200).json({ message: 'The sauce has been changed !' }))
-    .catch(error => res.status(400).json({ error }));
+    })
+    .catch(error => res.status(500).json({ error }));
 };
 
 //suppression d'une sauce
@@ -58,7 +61,7 @@ exports.deleteSauce = (req, res, next) => {
                     .then(() => res.status(200).json({ message: 'The sauce has been removed !' }))
                     .catch(error => res.status(400).json({ error }));
             })
-        }else{
+        } else {
             res.status(401).json({ error: 'Identifiant utilisateur invalide !' });
         }
     })
