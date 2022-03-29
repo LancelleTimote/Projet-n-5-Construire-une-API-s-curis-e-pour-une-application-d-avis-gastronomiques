@@ -50,7 +50,7 @@ Même si l’application deviendra peut-être un magasin en ligne dans un futur 
 
 ## :checkered_flag: 3. Objectifs du projet <a name = "objectifs_projet"></a>
 
-* Apprendre à utiliser Node.js, Express.js, MongoDB, et Mongoose.
+* Apprendre à utiliser Node.js, Express.js, MongoDB, et Mongoose, tout en respectant les bonnes nomenclatures et pratiques.
 * Implémenter un modèle logique de données conformément à la réglementation.
 * Stocker des données de manière sécurisée.
 * Mettre en œuvre des opérations CRUD de manière sécurisée.
