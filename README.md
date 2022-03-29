@@ -59,13 +59,10 @@ Même si l’application deviendra peut-être un magasin en ligne dans un futur 
 
 * HTML
 * CSS
-* JavaScript
+* JavaScript / Angular
 * TypeScript
-* Angular
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
+* Node.js / Express.js
+* MongoDB / Mongoose
 * Git & GitHub
 
 ## :exclamation: 5. Prérequis <a name = "prerequis"></a>
