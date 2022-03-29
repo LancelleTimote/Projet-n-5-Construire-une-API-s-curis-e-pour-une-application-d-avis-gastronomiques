@@ -1,4 +1,4 @@
-# Projet 5 : Construire une API sécurisée pour une application d'avis gastronomiques
+# Projet n°5 : Construire une API sécurisée pour une application d'avis gastronomiques
 
 ![GitHub contributors](https://img.shields.io/github/contributors/LancelleTimote/Projet-n-5-Construire-une-API-s-curis-e-pour-une-application-d-avis-gastronomiques?color=green&style=for-the-badge)
 ![GitHub language count](https://img.shields.io/github/languages/count/LancelleTimote/Projet-n-5-Construire-une-API-s-curis-e-pour-une-application-d-avis-gastronomiques?style=for-the-badge)
